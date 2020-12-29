@@ -3,63 +3,16 @@
     <nav-bar class="home-nav">
       <div slot="center">购物街</div>
     </nav-bar>
-    <home-swiper :banners="banners"/>
-    <RecommendView :recommends="recommends"/>
-    <FeatureView/>
-    <TabControl class="tab-control" :titles="['流行','新款','样式']" @tabClick="tabClick"/>
-    <good-list :goods="showGoods"/>
-    <ul>
-      <li>列表1</li>
-      <li>列表2</li>
-      <li>列表3</li>
-      <li>列表4</li>
-      <li>列表5</li>
-      <li>列表6</li>
-      <li>列表7</li>
-      <li>列表8</li>
-      <li>列表9</li>
-      <li>列表10</li>
-      <li>列表11</li>
-      <li>列表12</li>
-      <li>列表13</li>
-      <li>列表14</li>
-      <li>列表15</li>
-      <li>列表16</li>
-      <li>列表17</li>
-      <li>列表18</li>
-      <li>列表19</li>
-      <li>列表20</li>
-      <li>列表21</li>
-      <li>列表22</li>
-      <li>列表23</li>
-      <li>列表24</li>
-      <li>列表25</li>
-      <li>列表26</li>
-      <li>列表27</li>
-      <li>列表28</li>
-      <li>列表29</li>
-      <li>列表30</li>
-      <li>列表31</li>
-      <li>列表32</li>
-      <li>列表33</li>
-      <li>列表34</li>
-      <li>列表35</li>
-      <li>列表36</li>
-      <li>列表37</li>
-      <li>列表38</li>
-      <li>列表39</li>
-      <li>列表40</li>
-      <li>列表41</li>
-      <li>列表42</li>
-      <li>列表43</li>
-      <li>列表44</li>
-      <li>列表45</li>
-      <li>列表46</li>
-      <li>列表47</li>
-      <li>列表48</li>
-      <li>列表49</li>
-      <li>列表50</li>
-    </ul>
+    <scroll class="content" ref="scroll" :probe-type="3" @scroll="contentScroll" :pull-up-load="true"
+            @pullingUp="loadMore">
+      <home-swiper :banners="banners"/>
+      <RecommendView :recommends="recommends"/>
+      <FeatureView/>
+      <TabControl class="tab-control" :titles="['流行','新款','样式']" @tabClick="tabClick"/>
+      <good-list :goods="showGoods"/>
+    </scroll>
+    <!--    .native监听原生组件根元素的原生事件-->
+    <back-top @click.native="backClick" v-show="isShowBackTop"/>
   </div>
 </template>
 
@@ -72,6 +25,8 @@ import FeatureView from "@/views/home/childComps/FeatureView";
 import NavBar from 'components/common/navbar/NavBar';
 import TabControl from "@/components/content/tabControl/TabControl";
 import GoodList from "@/components/content/goods/GoodList";
+import Scroll from "@/components/common/scroll/Scroll";
+import BackTop from "@/components/content/backTop/BackTop";
 
 import {getHomeMultidata, getHomeGoods, getMyTest, getMyGoods} from "network/home";
 
@@ -86,7 +41,8 @@ export default {
         'news': {page: 0, list: []},
         'sell': {page: 0, list: []},
       },
-      currentType: 'pop'
+      currentType: 'pop',
+      isShowBackTop: false
     }
   },
   components: {
@@ -96,6 +52,8 @@ export default {
     NavBar,
     TabControl,
     GoodList,
+    Scroll,
+    BackTop
   },
   computed: {
     showGoods() {
@@ -110,6 +68,9 @@ export default {
     this.getMyGoods('pop')
 
   },
+  mounted() {
+    // this.refresh()
+  },
   methods: {
     /**
      *事件监听相关方法
@@ -118,7 +79,8 @@ export default {
       // console.log(index);
       switch (index) {
         case 0:
-          this.currentType = 'pop'
+          this.currentType = 'pop';
+          // this.$router.push('/category');
           break
         case 1:
           this.currentType = 'news'
@@ -128,7 +90,23 @@ export default {
           break
       }
     },
-
+    backClick() {
+      /**
+       * 通过this.$refs.scroll可以拿到scroll组件内容
+       * scrollTo(x,y,time)回到顶部
+       */
+      this.$refs.scroll.scrollTo(0, 0, 500)
+      let msg = this.$refs.scroll.scroll.msg;
+      console.log(msg);
+    },
+    contentScroll(options) {
+      // console.log(options);
+      this.isShowBackTop = Math.abs(options.y) > 200
+    },
+    loadMore() {
+      // console.log('上拉加载更多');
+      this.getMyGoods(this.currentType)
+    },
     /**
      * 网络请求相关方法
      */
@@ -140,12 +118,17 @@ export default {
       })
     },
     getMyGoods(type) {
-      getMyGoods(type).then(res => {
+      const page = this.goods[type].page + 1
+      getMyGoods(type, page).then(res => {
         let {pop, news, sell} = res.res
-        this.goods['pop'].list = pop
-        this.goods['news'].list = news
-        this.goods['sell'].list = sell
-        console.log(res);
+        // this.goods['pop'].list = pop
+        // this.goods['news'].list = news
+        // this.goods['sell'].list = sell
+        this.goods[type].page += 1
+        this.goods[type].list.push(...res.res[type])
+        //调用scroll组件里的方法
+        this.$refs.scroll.finishPullUp()
+        console.log(...res.res[type]);
       })
     },
 
@@ -154,9 +137,10 @@ export default {
      * @param type
      */
     getHomeGoods(type) {
-      const page = this.goods[type].page + 1
+      // const page = this.goods[type].page + 1
       getHomeGoods(type, page).then(res => {
-
+        this.goods[type].list.push(...res.data.list)
+        this.goods[type].page += 1
         console.log(res);
       })
     },
@@ -182,7 +166,6 @@ export default {
         console.log(error)       //请求失败返回的数据
       })
     },
-
 
 
   }
@@ -217,7 +200,8 @@ export default {
 
 .content {
   overflow: hidden;
-
+  /*height: calc(100% - 93px);*/
+  /*margin-top: 44px;*/
   position: absolute;
   top: 44px;
   bottom: 49px;
