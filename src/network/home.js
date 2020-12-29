@@ -25,16 +25,14 @@ export function getMyTest(id) {
   })
 }
 
-export function getMyGoods(type) {
+export function getMyGoods(type,page) {
   return myRequest({
     url: '/mallIndex',
-    // params: {
-    //   type
-    // },
     method:'post',
     headers:{'Content-Type':'application/x-www-form-urlencoded'},
     data:Qs.stringify({
-      type
+      type,
+      page
     }),
   })
 }
