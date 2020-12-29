@@ -66,6 +66,8 @@ export default {
     // this.getMyTest(1)
     // this.getMyUser(1)
     this.getMyGoods('pop')
+    this.getMyGoods('news')
+    this.getMyGoods('sell')
 
   },
   mounted() {
@@ -120,15 +122,12 @@ export default {
     getMyGoods(type) {
       const page = this.goods[type].page + 1
       getMyGoods(type, page).then(res => {
-        let {pop, news, sell} = res.res
-        // this.goods['pop'].list = pop
-        // this.goods['news'].list = news
-        // this.goods['sell'].list = sell
+        let {list} = res
         this.goods[type].page += 1
-        this.goods[type].list.push(...res.res[type])
+        this.goods[type].list.push(...list)
         //调用scroll组件里的方法
         this.$refs.scroll.finishPullUp()
-        console.log(...res.res[type]);
+        // console.log(...list);
       })
     },
 
