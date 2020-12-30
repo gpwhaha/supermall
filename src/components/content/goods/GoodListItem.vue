@@ -1,6 +1,6 @@
 <template>
   <div class="goods-item">
-    <img :src="goodsItem.pic" alt="">
+    <img :src="goodsItem.pic" alt="" @load="imageLoad">
     <div class="goods-info">
       <p>{{ goodsItem.text }}</p>
       <span class="price">{{ goodsItem.price }}</span>
@@ -18,6 +18,14 @@ export default {
       default() {
         return {}
       }
+    }
+  },
+  methods:{
+    imageLoad(){
+      // console.log('image');
+      //发射事件总线 给首页能够直接监听到图片加载变化事件
+      //要先在main.js中创建vue实例 挂载$bus
+      this.$bus.$emit('itemImageLoad');
     }
   }
 }

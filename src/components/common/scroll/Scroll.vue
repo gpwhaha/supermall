@@ -46,7 +46,6 @@ export default {
       probeType: this.probeType,
       pullUpLoad: this.pullUpLoad
     })
-    this.scroll.refresh();//dom结构发生改变需要refresh
     //监听滚动位置
     this.scroll.on('scroll', (options) => {
       // console.log(options);
@@ -56,17 +55,17 @@ export default {
     this.scroll.on('pullingUp', () => {
       // console.log('上拉加载更多');
       this.$emit('pullingUp')
-      // setTimeout(() => {
-      //   this.scroll.finishPullUp()
-      // }, 2000)
     })
   },
   methods: {
     scrollTo(x, y, time = 300) {
-      this.scroll.scrollTo(x, y, time)
+      this.scroll && this.scroll.scrollTo(x, y, time)
     },
-    finishPullUp(){
-      this.scroll.finishPullUp()
+    finishPullUp() {
+      this.scroll && this.scroll.finishPullUp()
+    },
+    refresh() {
+      this.scroll && this.scroll.refresh();//dom结构发生改变需要refresh
     }
   }
 }

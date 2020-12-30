@@ -3,7 +3,10 @@
     <nav-bar class="home-nav">
       <div slot="center">购物街</div>
     </nav-bar>
-    <scroll class="content" ref="scroll" :probe-type="3" @scroll="contentScroll" :pull-up-load="true"
+    <scroll class="content" ref="scroll"
+            :probe-type="3"
+            @scroll="contentScroll"
+            :pull-up-load="true"
             @pullingUp="loadMore">
       <home-swiper :banners="banners"/>
       <RecommendView :recommends="recommends"/>
@@ -61,13 +64,27 @@ export default {
     }
   },
   created() {
+    //1.请求多个数据
     this.getHomeMultidata()
     // this.getHomeGoods('pop')
     // this.getMyTest(1)
     // this.getMyUser(1)
+    //2.请求商品数据
     this.getMyGoods('pop')
     this.getMyGoods('news')
     this.getMyGoods('sell')
+    //3.监听item图片中的加载
+    /**
+     *这里是为了解决引入better-scroll组件出现的 上拉加载更多不能立马下拉 导致图片显示不全的bug
+     * 主要是有因为可能网络请求慢导致组件内计算可滑动的高度没有刷新或者错
+     * 监听商品组件页面内图片加载 就触发refresh函数 重新计算高度
+     *
+     *          $on在Vue3中已废除
+     **/
+    this.$bus.$on('itemImageLoad', () => {
+      this.$refs.scroll.refresh();
+      console.log('----');
+    })
 
   },
   mounted() {
@@ -123,8 +140,10 @@ export default {
       const page = this.goods[type].page + 1
       getMyGoods(type, page).then(res => {
         let {list} = res
-        this.goods[type].page += 1
-        this.goods[type].list.push(...list)
+        if (list.length > 0) {
+          this.goods[type].page += 1
+          this.goods[type].list.push(...list)
+        }
         //调用scroll组件里的方法
         this.$refs.scroll.finishPullUp()
         // console.log(...list);
