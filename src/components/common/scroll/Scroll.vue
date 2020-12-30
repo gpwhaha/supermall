@@ -47,15 +47,19 @@ export default {
       pullUpLoad: this.pullUpLoad
     })
     //监听滚动位置
-    this.scroll.on('scroll', (options) => {
-      // console.log(options);
-      this.$emit('scroll', options)
-    })
+    if (this.probeType == 2 || this.probeType == 3) {
+      this.scroll.on('scroll', (options) => {
+        // console.log(options);
+        this.$emit('scroll', options)
+      })
+    }
     //监听触底
-    this.scroll.on('pullingUp', () => {
-      // console.log('上拉加载更多');
-      this.$emit('pullingUp')
-    })
+    if (this.pullUpLoad) {
+      this.scroll.on('pullingUp', () => {
+        // console.log('上拉加载更多');
+        this.$emit('pullingUp')
+      })
+    }
   },
   methods: {
     scrollTo(x, y, time = 300) {
@@ -65,8 +69,10 @@ export default {
       this.scroll && this.scroll.finishPullUp()
     },
     refresh() {
-      console.log('----');
       this.scroll && this.scroll.refresh();//dom结构发生改变需要refresh
+    },
+    getScrollY() {
+      return this.scroll ? this.scroll.y : 0;
     }
   }
 }

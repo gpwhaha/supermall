@@ -42,8 +42,8 @@ export default new VueRouter({
             }
         },
         {
-            path: '/test',
-            component: () => import('../views/home/childComps/FeatureView'),
+            path: '/detail/:id',
+            component: () => import('../views/detail/Detail'),
             meta: {
                 showTab: false
             }

@@ -3,15 +3,22 @@
     <nav-bar class="home-nav">
       <div slot="center">购物街</div>
     </nav-bar>
+    <TabControl :titles="['流行','新款','样式']"
+                @tabClick="tabClick"
+                ref="tabControl1"
+                class="tab-control" v-show="isTabFixed"/>
     <scroll class="content" ref="scroll"
             :probe-type="3"
             @scroll="contentScroll"
             :pull-up-load="true"
             @pullingUp="loadMore">
-      <home-swiper :banners="banners"/>
+      <!--@swiperImageLoad.once让该方法只执行一次-->
+      <home-swiper :banners="banners" @swiperImageLoad.once="swiperImageLoad"/>
       <RecommendView :recommends="recommends"/>
       <FeatureView/>
-      <TabControl class="tab-control" :titles="['流行','新款','样式']" @tabClick="tabClick"/>
+      <TabControl :titles="['流行','新款','样式']"
+                  @tabClick="tabClick"
+                  ref="tabControl2"/>
       <good-list :goods="showGoods"/>
     </scroll>
     <!--    .native监听原生组件根元素的原生事件-->
@@ -32,6 +39,7 @@ import Scroll from "@/components/common/scroll/Scroll";
 import BackTop from "@/components/content/backTop/BackTop";
 
 import {getHomeMultidata, getHomeGoods, getMyTest, getMyGoods} from "network/home";
+import {debounce} from "common/utils";//防抖函数
 
 export default {
   name: "Home",
@@ -45,7 +53,10 @@ export default {
         'sell': {page: 0, list: []},
       },
       currentType: 'pop',
-      isShowBackTop: false
+      isShowBackTop: false,
+      tabOffsetTop: 0,
+      isTabFixed: false,
+      saveY: 0
     }
   },
   components: {
@@ -82,29 +93,30 @@ export default {
      *这里是为了解决引入better-scroll组件出现的 上拉加载更多不能立马下拉 导致图片显示不全的bug
      * 主要是有因为可能网络请求慢导致组件内计算可滑动的高度没有刷新或者错
      * 监听商品组件页面内图片加载 就触发refresh函数 重新计算高度
-     *
-     *          $on在Vue3中已废除
+     *$on在Vue3中已废除
+     * debounce防抖函数
      **/
-    const refresh = this.debounce(this.$refs.scroll.refresh,50)
+    const refresh = debounce(this.$refs.scroll.refresh, 50)
     this.$bus.$on('itemImageLoad', () => {
       refresh();
-      // console.log('----');
     })
+
+  },
+  destroyed() {
+
+  },
+  activated() {
+    // this.$refs.scroll.scrollTo(0, this.saveY, 0);
+    // this.$refs.scroll.refresh();
+  },
+  deactivated() {
+    // this.saveY = this.$refs.scroll.getScrollY()
+    // console.log(Math.abs(this.$refs.scroll.getScrollY()));
   },
   methods: {
     /**
      *事件监听相关方法
      */
-    //防抖动函数
-    debounce(func, delay) {
-      let timer = null;
-      return function (...args) {
-        if (timer) clearTimeout(timer)
-        timer = setTimeout(() => {
-          func.apply(this, args)
-        }, delay)
-      }
-    },
     tabClick(index) {
       // console.log(index);
       switch (index) {
@@ -119,6 +131,9 @@ export default {
           this.currentType = 'sell'
           break
       }
+      //保持两个TabControl的currentIndex值是一致的
+      this.$refs.tabControl1.currentIndex = index;
+      this.$refs.tabControl2.currentIndex = index;
     },
     backClick() {
       /**
@@ -130,12 +145,19 @@ export default {
       // console.log(msg);
     },
     contentScroll(options) {
-      // console.log(options);
-      this.isShowBackTop = Math.abs(options.y) > 200
+      //1.判断backtop是否显示，超过500出现回到顶部按钮
+      this.isShowBackTop = Math.abs(options.y) > 500
+      //2.决定tabcontrol是否吸顶（postion:fixed）
+      this.isTabFixed = Math.abs(options.y) > this.tabOffsetTop
     },
     loadMore() {
       // console.log('上拉加载更多');
       this.getMyGoods(this.currentType)
+    },
+    swiperImageLoad() {
+      //4.获取tabControl的offsetTop
+      //所有的组件都有一个属性$el，用于获取组件中的元素
+      this.tabOffsetTop = this.$refs.tabControl2.$el.offsetTop;
     },
     /**
      * 网络请求相关方法
@@ -144,7 +166,7 @@ export default {
       getHomeMultidata().then(res => {
         this.banners = res.data.banner.list;
         this.recommends = res.data.recommend.list;
-        console.log(res);
+        // console.log(res);
       })
     },
     getMyGoods(type) {
@@ -203,7 +225,7 @@ export default {
 
 <style scoped>
 #home {
-  padding-top: 44px;
+  /*padding-top: 44px;*/
   height: 100vh;
   position: relative;
 }
@@ -212,18 +234,18 @@ export default {
   background-color: var(--color-tint);
   color: #fff;
 
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  z-index: 9;
+  /*position: fixed;*/
+  /*left: 0;*/
+  /*right: 0;*/
+  /*top: 0;*/
+  /*z-index: 9;*/
 }
 
 .tab-control {
   /*到顶部44px停留不动*/
-  position: -webkit-sticky;
-  position: sticky;
-  top: 44px;
+  /*position: sticky;*/
+  position: relative;
+  /*top: 44px;*/
   z-index: 9;
 }
 
