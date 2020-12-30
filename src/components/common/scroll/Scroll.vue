@@ -65,6 +65,7 @@ export default {
       this.scroll && this.scroll.finishPullUp()
     },
     refresh() {
+      console.log('----');
       this.scroll && this.scroll.refresh();//dom结构发生改变需要refresh
     }
   }

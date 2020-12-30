@@ -73,6 +73,10 @@ export default {
     this.getMyGoods('pop')
     this.getMyGoods('news')
     this.getMyGoods('sell')
+
+
+  },
+  mounted() {
     //3.监听item图片中的加载
     /**
      *这里是为了解决引入better-scroll组件出现的 上拉加载更多不能立马下拉 导致图片显示不全的bug
@@ -81,19 +85,26 @@ export default {
      *
      *          $on在Vue3中已废除
      **/
+    const refresh = this.debounce(this.$refs.scroll.refresh,50)
     this.$bus.$on('itemImageLoad', () => {
-      this.$refs.scroll.refresh();
-      console.log('----');
+      refresh();
+      // console.log('----');
     })
-
-  },
-  mounted() {
-    // this.refresh()
   },
   methods: {
     /**
      *事件监听相关方法
      */
+    //防抖动函数
+    debounce(func, delay) {
+      let timer = null;
+      return function (...args) {
+        if (timer) clearTimeout(timer)
+        timer = setTimeout(() => {
+          func.apply(this, args)
+        }, delay)
+      }
+    },
     tabClick(index) {
       // console.log(index);
       switch (index) {
@@ -115,8 +126,8 @@ export default {
        * scrollTo(x,y,time)回到顶部
        */
       this.$refs.scroll.scrollTo(0, 0, 500)
-      let msg = this.$refs.scroll.scroll.msg;
-      console.log(msg);
+      // let msg = this.$refs.scroll.scroll.msg;
+      // console.log(msg);
     },
     contentScroll(options) {
       // console.log(options);
